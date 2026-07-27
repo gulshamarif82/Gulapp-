@@ -9,13 +9,15 @@ jobs:
         with:
           java-version: '17'
           distribution: 'temurin'
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
+      - uses: gradle/actions/setup-gradle@v3
+        with:
+          gradle-version: 8.5
+      - uses: android-actions/setup-android@v3
       - name: Create Project
         run: |
           cat > settings.gradle <<'EOF'
           pluginManagement { repositories { google(); mavenCentral(); gradlePluginPortal() } }
-          dependencyResolutionManagement { repositories { google(); mavenCentral() } }
+          dependencyResolutionManagement { repositoriesMode { repositories { google(); mavenCentral() } } }
           rootProject.name = "Gulapp"
           include ':app'
           EOF
@@ -28,12 +30,9 @@ jobs:
           EOF
           echo '<manifest xmlns:android="http://schemas.android.com/apk/res/android"><application android:label="Gulapp"><activity android:name=".MainActivity" android:exported="true"><intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter></activity></application></manifest>' > app/src/main/AndroidManifest.xml
           echo 'package com.gulsham.gulapp; import android.os.Bundle; import androidx.appcompat.app.AppCompatActivity; import android.widget.TextView; public class MainActivity extends AppCompatActivity { protected void onCreate(Bundle b){super.onCreate(b); TextView t=new TextView(this); t.setText("Hello Gulapp! APK Ready!"); t.setTextSize(28); setContentView(t);} }' > app/src/main/java/com/gulsham/gulapp/MainActivity.java
-      - name: Build Debug APK
-        run: |
-          gradle wrapper --gradle-version 8.5
-         ./gradlew :app:assembleDebug --no-daemon
-      - name: Upload APK
-        uses: actions/upload-artifact@v4
+      - name: Build APK
+        run: gradle :app:assembleDebug --no-daemon
+      - uses: actions/upload-artifact@v4
         with:
           name: Gulapp-APK
           path: app/build/outputs/apk/debug/app-debug.apk
