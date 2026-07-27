@@ -13,25 +13,40 @@ jobs:
       - uses: gradle/actions/setup-gradle@v3
         with:
           gradle-version: 8.5
-      - name: Create Android Project
+      - name: Create Project
         run: |
-          echo 'pluginManagement { repositories { google(); mavenCentral(); gradlePluginPortal() } }
+          cat > settings.gradle <<'GRADLE'
+          pluginManagement { repositories { google(); mavenCentral(); gradlePluginPortal() } }
           dependencyResolutionManagement { repositories { google(); mavenCentral() } }
           rootProject.name = "Gulapp"
-          include ":app"' > settings.gradle
+          include ":app"
+          GRADLE
           echo "plugins { id 'com.android.application' version '8.2.1' apply false; id 'org.jetbrains.kotlin.android' version '1.9.10' apply false }" > build.gradle
           mkdir -p app/src/main/java/com/gulsham/gulapp
-          cat > app/build.gradle <<'EOF'
+          cat > app/build.gradle <<'GRADLE'
           plugins { id 'com.android.application'; id 'org.jetbrains.kotlin.android' }
           android { namespace 'com.gulsham.gulapp'; compileSdk 34; defaultConfig { applicationId "com.gulsham.gulapp"; minSdk 24; targetSdk 34; versionCode 1; versionName "1.0" }; compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 } }
           dependencies { implementation 'androidx.core:core-ktx:1.12.0'; implementation 'androidx.appcompat:appcompat:1.6.1' }
-          EOF
+          GRADLE
           echo '<manifest xmlns:android="http://schemas.android.com/apk/res/android"><application android:label="Gulapp"><activity android:name=".MainActivity" android:exported="true"><intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter></activity></application></manifest>' > app/src/main/AndroidManifest.xml
-          printf 'package com.gulsham.gulapp\nimport android.os.Bundle\nimport androidx.appcompat.app.AppCompatActivity\nimport android.widget.TextView\nclass MainActivity : AppCompatActivity() { override fun onCreate(b: Bundle?) { super.onCreate(b); val t = TextView(this); t.text = "Hello Gulapp APK Ready!"; t.textSize = 30f; setContentView(t) } }' > app/src/main/java/com/gulsham/gulapp/MainActivity.kt
-      - name: Build
+          cat > app/src/main/java/com/gulsham/gulapp/MainActivity.kt <<'KT'
+          package com.gulsham.gulapp
+          import android.os.Bundle
+          import androidx.appcompat.app.AppCompatActivity
+          import android.widget.TextView
+          class MainActivity : AppCompatActivity() {
+            override fun onCreate(b: Bundle?) {
+              super.onCreate(b)
+              val t = TextView(this)
+              t.text = "Hello Gulapp! APK Ready!"
+              t.textSize = 30f
+              setContentView(t)
+            }
+          }
+          KT
+      - name: Build APK
         run: gradle :app:assembleDebug --no-daemon
-      - name: Upload APK
-        uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v4
         with:
           name: Gulapp-APK
           path: app/build/outputs/apk/debug/app-debug.apk
